@@ -111,21 +111,20 @@ let saveInterview
     task {
         let! interviewId =
             Sql.transaction transaction
-            |> Sql.query "INSERT INTO interviews (application_id, interviewer_id, rating) VALUES (@application_id, @interviewer_id, @rating) RETURNING interview_id"
+            |> Sql.query "INSERT INTO interviews (application_id, interviewer_id, rating, stage) VALUES (@application_id, @interviewer_id, @rating, @stage) RETURNING interview_id"
             |> Sql.parameters [
                 ("@application_id", Sql.int applicationId)
                 ("@interviewer_id", Sql.int (interviewers |> Map.find interview.interviewer))
                 ("@rating", Sql.text (interview.rating |> DiscriminatedUnion.toString))
+                ("@stage", Sql.text (interview.stage |> DiscriminatedUnion.toString))
             ]
             |> Sql.executeRowAsync (fun read -> read.int "interview_id")
 
-        let! _ =
+        do! _ =
             interview.skills
             |> List.toSeq
             |> Seq.map (saveSkillRating skills interviewId transaction)
             |> Task.runSequentially
-
-        return! Task.CompletedTask
     }
 
 let saveApplication
@@ -142,22 +141,25 @@ let saveApplication
 
         let! applicationId =
             Sql.transaction transaction
-            |> Sql.query "INSERT INTO applications (position_id, breezy_id, status, left_pipeline_stage) VALUES (@position_id, @breezy_id, @status, @left_pipeline_stage) RETURNING application_id"
+            |> Sql.query "INSERT INTO applications (position_id, breezy_id, date, university, university_course, status, left_pipeline_stage)
+            VALUES (@position_id, @breezy_id, @date, @university, @university_course, @status, @left_pipeline_stage)
+            RETURNING application_id"
             |> Sql.parameters [
                 ("@position_id", Sql.int (positions |> Map.find application.position))
                 ("@breezy_id", Sql.text application.breezyId)
+                ("@date", Sql.timestamp application.applied.UtcDateTime)
+                ("@university", Sql.textOrNone application.university)
+                ("@university_course", Sql.textOrNone application.universityCourse)
                 ("@status", Sql.text (application.status |> DiscriminatedUnion.toString))
                 ("@left_pipeline_stage", Sql.textOrNone leftPipelineStage)
             ]
             |> Sql.executeRowAsync (fun read -> read.int "application_id")
 
-        let! _ =
+        do! _ =
             application.interviews
             |> List.toSeq
             |> Seq.map (saveInterview interviewers skills applicationId transaction)
             |> Task.runSequentially
-
-        return! Task.CompletedTask
     }
 
 let savePosition (position: Position) (transaction: NpgsqlTransaction): Task<int> =
@@ -186,6 +188,4 @@ let saveApplications (applications: Application list) =
         let! _ = applications |> Seq.map (saveApplication positions interviewers skills transaction) |> Task.runSequentially
 
         do! transaction.CommitAsync()
-
-        return! Task.CompletedTask
     }

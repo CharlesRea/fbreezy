@@ -19,7 +19,7 @@ type Candidate = {
     updatedDate: DateTimeOffset
 }
 
-type Score = string // good, very_good
+type Score = string
 
 type ScorecardCriteria = {
     text: string
@@ -31,7 +31,7 @@ type ScorecardSection = {
 }
 
 type ScorecardResult = {
-    note: string
+    note: string option
     score: Score
     updatedDate: DateTimeOffset option
     sections: (ScorecardSection array) option
@@ -67,14 +67,23 @@ type CandidateNoteStreamContent = {
     body: string
 }
 
+type Question = {
+    text: string
+    response: JsonElement option // String for text questions, JSON object for file uploads
+}
+
+type Questionnaire = {
+    questions: Question array
+}
+
 type CandidateMeta = {
     scorecards: Scorecard array
     stream: CandidateStream array
+    questionnaires: Questionnaire array
 }
 
-// TODO Update the page size to be a realistic number once I've finished developing
 let getCandidates (httpClient: HttpClient) (companyId: string) (positionId: string): Task<Candidate list> =
-    get $"https://api.breezy.hr/v3/company/{companyId}/position/{positionId}/candidates?page_size=10" httpClient
+    get $"https://api.breezy.hr/v3/company/{companyId}/position/{positionId}/candidates" httpClient
 
 let getCandidateMeta (httpClient: HttpClient) (companyId: string) (positionId: string) (candidateId: string): Task<CandidateMeta> =
     get $"https://api.breezy.hr/v3/company/{companyId}/position/{positionId}/candidate/{candidateId}/meta" httpClient

@@ -33,8 +33,6 @@ let jsonContent content: StringContent =
 
 let get<'a> (url: string) (httpClient: HttpClient): Task<'a> =
     task {
-        printf $"Getting {url}\n"
-
         use! response = httpClient.GetAsync(url)
         response.EnsureSuccessStatusCode() |> ignore
 

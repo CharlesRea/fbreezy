@@ -8,6 +8,9 @@ CREATE TABLE applications (
     application_id serial PRIMARY KEY,
     position_id integer NOT NULL REFERENCES positions(position_id),
     breezy_id text NOT NULL UNIQUE,
+    date timestamp NOT NULL,
+    university text NULL,
+    university_course text NULL,
     status text NOT NULL,
     left_pipeline_stage text NULL
 );
@@ -23,7 +26,8 @@ CREATE TABLE interviews (
     interview_id serial PRIMARY KEY,
     application_id integer NOT NULL REFERENCES applications(application_id),
     interviewer_id integer NOT NULL REFERENCES interviewers(interviewer_id),
-    rating text NOT NULL
+    rating text NOT NULL,
+    stage text NOT NULL
 );
 
 CREATE INDEX interviews_application_idx ON interviews (application_id);

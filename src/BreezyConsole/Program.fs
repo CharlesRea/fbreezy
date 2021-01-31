@@ -31,18 +31,22 @@ let signin (httpClient: HttpClient) email password: Task<SigninResponse> =
         return! deserializeJson responseStream
     }
 
-let processCandidate (httpClient: HttpClient) (position: Position) (candidate: Breezy.Candidate): Task<Application> =
+let processCandidate (httpClient: HttpClient) (position: Position) (candidate: Breezy.Candidate): Task<Application option> =
     task {
-        printf $"Fetching candidate {candidate.id}\n\n"
+        printf $"Fetching candidate {candidate.id}\n"
         let! candidateMeta = Breezy.getCandidateMeta httpClient companyId position.breezyId candidate.id
-        printf "Fetched candidate\n\n"
 
-        return parseApplication position candidate candidateMeta
+        try
+            return Some (parseApplication position candidate candidateMeta)
+        with
+            | ex ->
+                printf $"Error fetching candidate {candidate.id} for position {position.breezyId}.\n{ex.ToString()}"
+                return None
     }
 
 let processPosition (httpClient: HttpClient) (position: Position): Task<Application list> =
     task {
-        printf $"Fetching candidates for position {position.name}\n\n"
+        printf $"Fetching candidates for position {position.name}\n"
         let! candidates = Breezy.getCandidates httpClient companyId position.breezyId
         printf $"Received {candidates.Length} candidates\n\n"
 
@@ -53,7 +57,7 @@ let processPosition (httpClient: HttpClient) (position: Position): Task<Applicat
             |> Task.runSequentially
 
         printf $"Fetched all candidates for position {position.name}\n\n"
-        return applications
+        return applications |> Seq.filter (Option.isSome) |> Seq.map (Option.get) |> List.ofSeq
     }
 
 let run email password =
