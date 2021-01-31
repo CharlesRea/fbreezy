@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C5370E55-B5D
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "BreezyConsole", "src\BreezyConsole\BreezyConsole.fsproj", "{8A2DF653-1CED-4D13-9674-204CC69ACDAB}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Migrations", "src\Migrations\Migrations.fsproj", "{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,8 +34,21 @@ Global
 		{8A2DF653-1CED-4D13-9674-204CC69ACDAB}.Release|x64.Build.0 = Release|Any CPU
 		{8A2DF653-1CED-4D13-9674-204CC69ACDAB}.Release|x86.ActiveCfg = Release|Any CPU
 		{8A2DF653-1CED-4D13-9674-204CC69ACDAB}.Release|x86.Build.0 = Release|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Debug|x64.Build.0 = Debug|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Debug|x86.Build.0 = Debug|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Release|x64.ActiveCfg = Release|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Release|x64.Build.0 = Release|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Release|x86.ActiveCfg = Release|Any CPU
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{8A2DF653-1CED-4D13-9674-204CC69ACDAB} = {C5370E55-B5DD-4C88-AB9C-59FFD1CC5A36}
+		{F2A8D2C5-8C9B-4812-ACB0-977138B86E4F} = {C5370E55-B5DD-4C88-AB9C-59FFD1CC5A36}
 	EndGlobalSection
 EndGlobal

@@ -31,11 +31,10 @@ type ScorecardSection = {
 }
 
 type ScorecardResult = {
-    [<JsonPropertyName("_id")>] id: string
     note: string
     score: Score
-    updatedDate: DateTimeOffset
-    sections: ScorecardSection array
+    updatedDate: DateTimeOffset option
+    sections: (ScorecardSection array) option
 }
 
 type ScorecardUser = {
@@ -75,7 +74,7 @@ type CandidateMeta = {
 
 // TODO Update the page size to be a realistic number once I've finished developing
 let getCandidates (httpClient: HttpClient) (companyId: string) (positionId: string): Task<Candidate list> =
-    get $"https://api.breezy.hr/v3/company/{companyId}/position/{positionId}/candidates?page_size=3" httpClient
+    get $"https://api.breezy.hr/v3/company/{companyId}/position/{positionId}/candidates?page_size=10" httpClient
 
 let getCandidateMeta (httpClient: HttpClient) (companyId: string) (positionId: string) (candidateId: string): Task<CandidateMeta> =
     get $"https://api.breezy.hr/v3/company/{companyId}/position/{positionId}/candidate/{candidateId}/meta" httpClient

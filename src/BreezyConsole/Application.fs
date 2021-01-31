@@ -3,6 +3,11 @@ module BreezyConsole.Application
 open System
 open BreezyConsole.Http
 
+type Position = {
+    breezyId: string
+    name: string
+}
+
 type InterviewStage =
     | Phone
     | Second
@@ -23,28 +28,27 @@ type SkillRating = {
 type Interview = {
     stage: InterviewStage
     interviewer: string
-    date: DateTimeOffset
     rating: Rating
     skills: SkillRating list
 }
 
-type ApplicationStatus =
-    | Offered
-    | TBNed
-    | Withdrawn
-    | InProgress
-
-type TbnStage =
-    | Cv
+type LeavePipelineStage =
+    | AfterCv
     | AfterPhone
     | AfterSecond
 
+type ApplicationStatus =
+    | Offered
+    | TBNed of LeavePipelineStage
+    | Withdrawn of LeavePipelineStage
+    | InProgress
+
 type Application = {
+    position: Position
     breezyId: string
     applied: DateTimeOffset
-    interviews: Interview list
     status: ApplicationStatus
-    tbnStage: TbnStage option
+    interviews: Interview list
 }
 
 type Transition =
@@ -84,10 +88,18 @@ let tryFindPhoneInterviewer (stream: Breezy.CandidateStream): string option =
     | _ -> None
 
 let determineStatus (transitions: Transition list): ApplicationStatus =
+    let leftPipelineAt () =
+        if transitions |> List.contains InviteToSecond then
+            AfterSecond
+        else if transitions |> List.contains InviteToPhone then
+            AfterPhone
+        else
+            AfterCv
+
     if transitions |> List.contains Withdraw then
-        Withdrawn
+        Withdrawn (leftPipelineAt ())
     else if transitions |> List.contains TBN then
-        TBNed
+        TBNed (leftPipelineAt ())
     else if transitions |> List.contains Offer then
         Offered
     else InProgress
@@ -113,6 +125,7 @@ let parseScorecard (transitions: Transition list) (phoneInterviewer: string opti
 
     let skills =
         scorecard.scorecard.sections
+        |> Option.defaultValue Array.empty
         |> Array.toSeq
         |> Seq.map (fun section -> section.criteria |> Array.toSeq)
         |> Seq.concat
@@ -122,11 +135,10 @@ let parseScorecard (transitions: Transition list) (phoneInterviewer: string opti
 
     { stage = interviewStage
       interviewer = scorecard.actingUser.name
-      date = scorecard.scorecard.updatedDate
       rating = parseRating scorecard.scorecard.score
       skills = skills }
 
-let parseApplication (candidate: Breezy.Candidate) (meta: Breezy.CandidateMeta): Application =
+let parseApplication (position: Position) (candidate: Breezy.Candidate) (meta: Breezy.CandidateMeta): Application =
     let transitions =
         meta.stream
         |> Array.toSeq
@@ -145,19 +157,8 @@ let parseApplication (candidate: Breezy.Candidate) (meta: Breezy.CandidateMeta):
         |> Seq.tryHead
         |> Option.flatten
 
-    let tbnStage =
-        match status with
-        | TBNed ->
-            if transitions |> List.contains InviteToSecond then
-                Some AfterSecond
-            else if transitions |> List.contains InviteToPhone then
-                Some AfterPhone
-            else
-                Some Cv
-        | _ -> None
-
-    { breezyId = candidate.id
+    { position = position
+      breezyId = candidate.id
       applied = candidate.creationDate
       interviews = meta.scorecards |> Array.toList |> List.map (parseScorecard transitions phoneInterviewer)
-      status = status
-      tbnStage = tbnStage }
+      status = status }

@@ -4,4 +4,7 @@ A work-in-progress project to extract data from the [breezy.hr API](https://deve
 
 Written in F#
 
-To run, in `src/BreezyConsole`, run `dotnet run -- <email> <password>`
+To run:
+- Run `docker-compose up -d` to create the postgres DB
+- In `src/Migrations`, run `dotnet run -- --clean` to clean and initialise the DB schema
+- In `src/BreezyConsole`, run `dotnet run -- <email> <password>`, passing in your Breezy login details

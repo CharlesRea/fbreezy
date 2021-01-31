@@ -3,6 +3,7 @@ open System.Threading.Tasks
 open BreezyConsole
 open FSharp.Control.Tasks.V2
 open BreezyConsole.Http
+open BreezyConsole.Application
 
 type SigninCommand = {
     email: string
@@ -15,10 +16,10 @@ type SigninResponse = {
 
 let companyId = "e85537b9339b01"
 
-let positionIds = [
-    "c3da354dcaef01" // developer
-    "f7bc961fe44f01" // Internship
-    "96ff3356fe5901" // Placement
+let positions = [
+    { breezyId = "c3da354dcaef01"; name = "Graduate" }
+    { breezyId = "f7bc961fe44f01"; name = "Internship" }
+    { breezyId = "96ff3356fe5901"; name = "Placement" }
 ]
 
 let signin (httpClient: HttpClient) email password: Task<SigninResponse> =
@@ -30,27 +31,29 @@ let signin (httpClient: HttpClient) email password: Task<SigninResponse> =
         return! deserializeJson responseStream
     }
 
-let processCandidate (httpClient: HttpClient) (positionId: string) (candidate: Breezy.Candidate): Task<Application.Application> =
+let processCandidate (httpClient: HttpClient) (position: Position) (candidate: Breezy.Candidate): Task<Application> =
     task {
         printf $"Fetching candidate {candidate.id}\n\n"
-        let! candidateMeta = Breezy.getCandidateMeta httpClient companyId positionId candidate.id
+        let! candidateMeta = Breezy.getCandidateMeta httpClient companyId position.breezyId candidate.id
         printf "Fetched candidate\n\n"
 
-        return Application.parseApplication candidate candidateMeta
+        return parseApplication position candidate candidateMeta
     }
 
-let processPosition (httpClient: HttpClient) (positionId: string) =
+let processPosition (httpClient: HttpClient) (position: Position): Task<Application list> =
     task {
-        printf $"Fetching candidates for position {positionId}\n\n"
-        let! candidates = Breezy.getCandidates httpClient companyId positionIds.[0]
+        printf $"Fetching candidates for position {position.name}\n\n"
+        let! candidates = Breezy.getCandidates httpClient companyId position.breezyId
         printf $"Received {candidates.Length} candidates\n\n"
 
-        for candidate in candidates do
-            let! application = processCandidate httpClient positionId candidate
-            printf "Parsed application: \n%A\n\n" application
-            do! Task.Delay(800) // Delay to keep us below 100 requests per second and avoid rate limiting: https://developer.breezy.hr/docs/rate-limiting
+        let! applications =
+            candidates
+            |> Seq.ofList
+            |> Seq.map (processCandidate httpClient position)
+            |> Task.runSequentially
 
-        return! Task.CompletedTask
+        printf $"Fetched all candidates for position {position.name}\n\n"
+        return applications
     }
 
 let run email password =
@@ -63,10 +66,15 @@ let run email password =
 
         httpClient.DefaultRequestHeaders.Add("Authorization", signinResponse.accessToken)
 
-        for position in positionIds do
-            do! processPosition httpClient position
+        let! applications =
+            positions
+            |> Seq.ofList
+            |> Seq.map (processPosition httpClient)
+            |> Task.runSequentially
 
-        return! Task.CompletedTask
+        printf $"Fetched all applications from Breezy API\n\n"
+        do! Db.saveApplications (applications |> List.concat)
+        printf "Saved applications to DB\n\n"
     }
 
 [<EntryPoint>]
